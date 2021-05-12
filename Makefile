@@ -19,8 +19,7 @@ rpm:
 
 build-llvm:
 	mkdir -p ${BUILD_DIR}
-	cd ${BUILD_DIR} && cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" ${LLVM_DIR}
-	ninja -j 4
+	cd ${BUILD_DIR} && cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" .. && ninja -j 4
 
 install-llvm:
 	cd ${BUILD_DIR} && make install
