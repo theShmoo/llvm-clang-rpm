@@ -1,47 +1,33 @@
 THIS_MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 BUILD_TOP_DIR := $(abspath $(dir ${THIS_MAKEFILE_PATH}))
 INSTALL_PREFIX := ${BUILD_TOP_DIR}/install
-VERSION_STRING := 3.9
-BRANCH := release_39
-BINTRAY_KEY :=
-#ASSERTIONS := -DLLVM_ENABLE_ASSERTIONS=TRUE
+VERSION_STRING := 12.0.0
+SRC_DIR := llvm-project-${VERSION_STRING}.src
+LLVM_DIR := ${SRC_DIR}/llvm
+BUILD_DIR := ${LLVM_DIR}/build
 
 all:
-	make depends
-	make source
-	make rpm
-
-depends:
-	yum install -y make curl tar gcc gcc-c++ python m4 autoconf automake libtool zlib-devel libstdc++-devel git rpm-build libxml2-devel libffi-devel
-	cd /tmp && curl -L "https://cmake.org/files/v3.4/cmake-3.4.1-Linux-x86_64.tar.gz" -o cmake.tar.gz && \
-          tar -xzf cmake.tar.gz && cp -r cmake-3.4.1-Linux-x86_64/* /usr/
+        make source
+        make rpm
 
 source:
-	git clone --depth=1 --single-branch --branch=${BRANCH} http://llvm.org/git/llvm.git llvm
-	cd llvm/tools && git clone --depth=1 --single-branch --branch=${BRANCH} http://llvm.org/git/clang.git
-	cd llvm/projects && git clone --depth=1 --single-branch --branch=${BRANCH} http://llvm.org/git/compiler-rt.git
-	cd llvm/projects && git clone --depth=1 --single-branch --branch=${BRANCH} http://llvm.org/git/openmp.git
-	tar -czf llvm-clang-${VERSION_STRING}.tar.gz llvm
+        #wget https://github.com/llvm/llvm-project/releases/download/llvmorg-${VERSION_STRING}/${SRC_DIR}.tar.xz
+        tar -xf ${SRC_DIR}.tar.xz
 
 rpm:
-	rpmbuild -bb --define "_topdir ${BUILD_TOP_DIR}" --define "version ${VERSION_STRING}" --define "buildroot ${INSTALL_PREFIX}" ${BUILD_TOP_DIR}/llvm-clang.spec
+        rpmbuild -bb --define "_topdir ${BUILD_TOP_DIR}" --define "version ${VERSION_STRING}" --define "buildroot ${INSTALL_PREFIX}" ${BUILD_TOP_DIR}/llvm-clang.spec
 
 build-llvm:
-	mkdir -p build 
-	cd build && cmake $(ASSERTIONS) -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}/usr -DCMAKE_BUILD_TYPE=Release ${BUILD_TOP_DIR}/llvm
-	cd build && sed -i 's|${INSTALL_PREFIX}||g' include/llvm/Config/llvm-config.h
-	cd build && sed -i 's|${INSTALL_PREFIX}||g' include/llvm/Config/config.h
-	cd build && make -j4
+        mkdir -p ${BUILD_DIR}
+        cd ${BUILD_DIR} && cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" ${LLVM_DIR}
+        ninja -j 4
 
 install-llvm:
-	cd build && make install
-
-publish:
-	curl -H "X-Bintray-Publish: 1" -H "X-Bintray-Override: 1" -T ${BUILD_TOP_DIR}/RPMS/x86_64/llvm-clang-${VERSION_STRING}-1.el7.centos.x86_64.rpm -uwangzw:${BINTRAY_KEY} \
-      https://api.bintray.com/content/wangzw/rpm/llvm-clang/${VERSION_STRING}/centos7/x86_64/llvm-clang-${VERSION_STRING}-1.el7.centos.x86_64.rpm
+        cd ${BUILD_DIR} && make install
 
 clean:
-	rm -rf build
-	rm -rf ${INSTALL_PREFIX}
+        rm -rf ${BUILD_DIR}
+        rm -rf ${INSTALL_PREFIX}
 
-.PHONY: all depends source rpm build-llvm install-llvm clean
+.PHONY: all source rpm build-llvm install-llvm clean
+
