@@ -19,14 +19,16 @@ rpm:
 
 build-llvm:
 	mkdir -p ${BUILD_DIR}
-	cd ${BUILD_DIR} && cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" .. && ninja -j 4
+	cd ${BUILD_DIR} && cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}/usr -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" .. && make -j 4
+	# cd ${BUILD_DIR} && sed -i 's|${INSTALL_PREFIX}||g' include/llvm/Config/llvm-config.h
+	# cd ${BUILD_DIR} && sed -i 's|${INSTALL_PREFIX}||g' include/llvm/Config/config.h
 
 install-llvm:
 	cd ${BUILD_DIR} && make install
 
 clean:
-	rm -rf ${BUILD_DIR}
-	rm -rf ${INSTALL_PREFIX}
+	#rm -rf ${BUILD_DIR}
+	#rm -rf ${INSTALL_PREFIX}
 
 .PHONY: all source rpm build-llvm install-llvm clean
 

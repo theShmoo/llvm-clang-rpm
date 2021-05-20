@@ -6,7 +6,7 @@ Version: %{version}
 Release: %{release}
 Summary: The Low Level Virtual Machine
 Group: Development/Libraries
-Source0: llvm-clang-%{version}.tar.gz
+Source0: llvm-clang-%{version}.tar.xz
 
 License: NCSA
 BuildRoot:  %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
